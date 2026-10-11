@@ -36,6 +36,28 @@ def chat_response(content: str) -> httpx.Response:
     )
 
 
+def test_update_config_hot_swaps_api_key() -> None:
+    """控制台改 Key 后，下一次请求必须带上新的 Authorization。
+
+    Key 不能写死在 httpx client 的默认头里，否则运行中改 Key 不会生效。
+    """
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.headers.get("authorization", ""))
+        return chat_response('{"answer": "A"}')
+
+    async def scenario() -> None:
+        transport = httpx.MockTransport(handler)
+        async with DeepSeekClient(config(api_key="sk-old"), transport=transport) as client:
+            await client.ask(make_problem())
+            client.update_config(config(api_key="sk-new"))
+            await client.ask(make_problem())
+
+    run(scenario())
+    assert seen == ["Bearer sk-old", "Bearer sk-new"]
+
+
 def run(coro: object) -> object:
     return asyncio.run(coro)  # type: ignore[arg-type]
 
@@ -56,14 +78,14 @@ def test_successful_call_and_request_shape() -> None:
 
     assert suggestion.letters == ["B"]
     assert suggestion.confidence == 0.95
-    assert suggestion.model == "deepseek-chat"
+    assert suggestion.model == "deepseek-flash"
 
     assert len(seen) == 1
     request = seen[0]
     assert str(request.url) == "https://api.deepseek.com/chat/completions"
     assert request.headers["authorization"] == "Bearer sk-test"
     body = json.loads(request.content)
-    assert body["model"] == "deepseek-chat"
+    assert body["model"] == "deepseek-flash"
     assert body["response_format"] == {"type": "json_object"}
     assert body["stream"] is False
     assert body["messages"][0]["role"] == "system"
@@ -216,7 +238,7 @@ def test_vision_disabled_ignores_images() -> None:
             await client.ask(make_problem(), images=["https://example.com/slide.png"])
 
     run(scenario())
-    assert bodies[0]["model"] == "deepseek-chat"
+    assert bodies[0]["model"] == "deepseek-flash"
     assert isinstance(bodies[0]["messages"][1]["content"], str)
 
 
@@ -242,7 +264,7 @@ def test_list_models() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path.endswith("/models")
         return httpx.Response(
-            200, json={"data": [{"id": "deepseek-reasoner"}, {"id": "deepseek-chat"}, {"x": 1}]}
+            200, json={"data": [{"id": "deepseek-v4-pro"}, {"id": "deepseek-flash"}, {"x": 1}]}
         )
 
     async def scenario() -> list[str]:
@@ -250,4 +272,4 @@ def test_list_models() -> None:
         async with DeepSeekClient(config(), transport=transport) as client:
             return await client.list_models()
 
-    assert run(scenario()) == ["deepseek-chat", "deepseek-reasoner"]
+    assert run(scenario()) == ["deepseek-flash", "deepseek-v4-pro"]

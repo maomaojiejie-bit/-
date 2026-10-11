@@ -1,0 +1,18 @@
+.env
+config.yaml
+.chrome-profile/
+.chrome-profile-*/
+records/
+records-*/
+logs/
+.tmp/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pylibs/
+tests/.tmp/
+
+# 控制台里保存的运行时设置
+console-settings.json
