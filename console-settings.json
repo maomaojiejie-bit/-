@@ -17,9 +17,6 @@
     "window_width": 800,
     "window_height": 600
   },
-  "deepseek": {
-    "provider": "qwen",
-    "model": "qwen-plus",
-    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
-  }
+
+<<
 }
