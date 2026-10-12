@@ -9,7 +9,7 @@
   "solver": {
     "dom_fallback": true,
     "poll_interval": 2.0,
-    "auto_enter_lesson": false,
+    "auto_enter_lesson": true,
     "enter_lesson_interval": 20.0,
     "heartbeat_interval": 30.0
   },
@@ -17,6 +17,9 @@
     "window_width": 800,
     "window_height": 600
   },
-
-<<
+  "deepseek": {
+    "provider": "qwen",
+    "model": "qwen-plus",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  }
 }
